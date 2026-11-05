@@ -7,7 +7,13 @@ const nm=f=>path.basename(f).replace(/\.json$/,'');
 const slug=s=>String(s||'').toLowerCase().normalize('NFC').replace(/đ/g,'d').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 const hasSeq=(t,p)=>(' '+t+' ').includes(' '+p+' ');
 const r1=v=>Math.round(v*10)/10;
-const KEYS=[['w','Độ dài (âm tiết)',0],['vx','Từ khoá, mọi biến thể (lần)',1],['vdens','Mật độ từ khoá, mọi biến thể %',1],['svc','Dịch vụ (lần)',1],['loc','Địa danh (lần)',1],['vgap','Khoảng trống từ khoá lớn nhất %',-1],['h2n','Số H2',0],['h3n','Số H3',0],['h3per','H3 trên mỗi H2',0],['h2v','H2 chứa từ khoá %',1],['h2sv','H2 chứa dịch vụ %',1],['h2dd','H2 chứa địa danh %',1],['h3v','H3 chứa từ khoá %',1],['h3sv','H3 chứa dịch vụ %',1],['h3dd','H3 chứa địa danh %',1],['fhv','Heading đầu tiên có từ khoá (thứ tự)',-2],['prox','Dịch vụ sát địa danh %',1],['phone','Số điện thoại (lần)',1],['brand','Thương hiệu (lần)',1],['img','Ảnh',1],['altv','Alt chứa từ khoá %',1],['bold','In đậm',1],['tab','Bảng',1],['lin','Link nội bộ',1],['tel','Link tel:',1],['faq','Câu hỏi FAQ',1],['psv','Đoạn có dịch vụ %',1],['plc','Đoạn có địa danh %',1]];
+const KEYS=[['w','Độ dài (âm tiết)',0],['svc','Dịch vụ (lần)',1],['loc','Địa danh (lần)',1],['h2n','Số H2',0],['h3n','Số H3',0],['h3per','H3 trên mỗi H2',0],['h2sv','H2 chứa dịch vụ %',1],['h2dd','H2 chứa địa danh %',1],['h3sv','H3 chứa dịch vụ %',1],['h3dd','H3 chứa địa danh %',1],['prox','Dịch vụ sát địa danh %',1],['phone','Số điện thoại (lần)',1],['brand','Thương hiệu (lần)',1],['img','Ảnh',1],['bold','In đậm',1],['tab','Bảng',1],['lin','Link nội bộ',1],['tel','Link tel:',1],['faq','Câu hỏi FAQ',1],['psv','Đoạn có dịch vụ %',1],['plc','Đoạn có địa danh %',1]];
+// từ khoá chính đo theo vai trò: biến thể đối thủ dùng làm từ khoá chính được quy đổi thành từ khoá chính của mình (và ngược lại)
+const KMAIN=[['Từ khoá chính (lần)',0,1],['Mật độ từ khoá chính %',3,1],['Khoảng trống từ khoá chính lớn nhất %',4,-1],['H2 chứa từ khoá chính %',5,1],['H3 chứa từ khoá chính %',6,1],['Heading đầu tiên có từ khoá chính (thứ tự)',7,-2],['Alt chứa từ khoá chính %',8,1]];
+// biến thể đối thủ dùng làm từ khoá chính: có trong H1 (ưu tiên dạng có "tại"), không có thì xét Title, cuối cùng là biến thể xuất hiện nhiều nhất
+function chinh(d,kws){const has=(t,k)=>(' '+String(t||'').toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]+/gu,' ')+' ').includes(' '+k+' ');const kw=d.kw||{};
+ for(const src of [d.meta&&d.meta.h1,d.meta&&d.meta.title]){const f=kws.filter(k=>has(src,k));if(f.length)return f.includes(kws[0])?kws[0]:f.sort((a,b)=>((kw[b]||[0])[0])-((kw[a]||[0])[0]))[0]}
+ return [...kws].sort((a,b)=>((kw[b]||[0])[0])-((kw[a]||[0])[0]))[0]}
 // "Từ khoá" = từ khoá chính + phụ (cùng intent: [dịch vụ] (tại) (huyện/quận) [địa danh]). Bảng từng biến thể chỉ để tham khảo, không chấm.
 // mục tiêu theo cách skill IG: tăng = từ (min+max)/2 tới điểm giữa của mức đó và max; giảm = ≤ mức giữa; dải = trong dải đối thủ ±10%
 function judge(v,x,dir){const mx=Math.max(...v),mn=Math.min(...v),mid=(mx+mn)/2;
@@ -43,9 +49,14 @@ else if(cmd==='plan'){ // bảng chỉ số + từ khoá + bản đồ heading. 
  o.push(`## Chỉ số (${D.length} đối thủ) — chỉ in dòng Thiếu/Thừa`,`| Chỉ số | ${D.map(d=>d[0]).join(' | ')} | Mục tiêu | Bài | KQ |`,'|---|'+D.map(()=>'---|').join('')+'---|---|---|');
  KEYS.forEach(([k,lab,dir])=>{const v=D.map(d=>d[1].m[k]??0),x=B.m[k]??0,[tg,kq]=judge(v,x,dir);st[kq]++;if(kq==='Đạt')ok.push(lab);else o.push(`| ${lab} | ${v.join(' | ')} | ${tg} | ${x} | ${kq} |`)});
  o.push(`Đạt ${st.Đạt}/${KEYS.length}: ${ok.join(', ')}`);
- const kws=Object.keys(B.kw||{});
- if(kws.length){o.push('',`## Từng biến thể từ khoá (tham khảo, không chấm; đã chấm gộp ở bảng trên)`,`| Biến thể | Vị trí | ${D.map(d=>d[0]).join(' | ')} | Bài |`,'|---|---|'+D.map(()=>'---|').join('')+'---|');
-  kws.forEach(k=>['thân bài','H2','H3'].forEach((p,i)=>{const v=D.map(d=>((d[1].kw||{})[k]||[0,0,0])[i]),x=B.kw[k][i];if(Math.max(...v)===0&&x===0)return;o.push(`| ${k} | ${p} | ${v.join(' | ')} | ${x} |`)}))}
+ const kws=Object.keys(B.kw||{}),V1=kws[0];
+ if(V1){const map=D.map(([n,d])=>{const P=chinh(d,kws);return [n,d,k=>k===V1?P:k===P?V1:k,P]});
+  const qd=map.filter(x=>x[3]!==V1);if(qd.length)o.push('',...qd.map(([n,,,P])=>`Quy đổi: ${n} dùng "${P}" làm từ khoá chính → so với "${V1}" của bài; "${V1}" của ${n} so với "${P}" của bài.`));
+  const g=(d,k,i)=>((d.kw||{})[k]||[0,0,0,0,0,0,0,0,0])[i];
+  o.push('',`## Từ khoá chính "${V1}" (đã quy đổi theo vai trò)`,`| Chỉ số | ${D.map(d=>d[0]).join(' | ')} | Mục tiêu | Bài | KQ |`,'|---|'+D.map(()=>'---|').join('')+'---|---|---|');
+  KMAIN.forEach(([lab,i,dir])=>{const v=map.map(([,d,f])=>g(d,f(V1),i)),x=g(B,V1,i),[tg,kq]=judge(v,x,dir);st[kq]++;o.push(`| ${lab} | ${v.join(' | ')} | ${tg} | ${x} | ${kq} |`)});
+  if(kws.length>1){o.push('','## Từ khoá phụ (đã quy đổi theo vai trò)',`| Từ khoá | Vị trí | ${D.map(d=>d[0]).join(' | ')} | Mục tiêu | Bài | KQ |`,'|---|---|'+D.map(()=>'---|').join('')+'---|---|---|');
+   kws.slice(1).forEach(k=>['thân bài','H2','H3'].forEach((p,i)=>{const v=map.map(([,d,f])=>g(d,f(k),i)),x=g(B,k,i);if(Math.max(...v)===0&&x===0)return;const[tg,kq]=judge(v,x,1);o.push(`| ${k} | ${p} | ${v.join(' | ')} | ${tg} | ${x} | ${kq} |`)}))}}
  const hl=(n,d)=>[`- **${n}** ${d.meta?d.meta.url:''}`+(d.meta?` · H1: ${d.meta.h1}`:''),...(d.hm||[]).map(h=>`  ${h[0]===3?'  ':''}H${h[0]} [${h[2]||'-'}] ${h[1]}`)];
  o.push('','## Bản đồ heading (E exact · V biến thể · S dịch vụ · D địa danh)');D.forEach(([n,d])=>o.push(...hl(n,d)));o.push(...hl('Bài',B));
  const dv=slug(cfg.dv),dd=slug(cfg.dd),wr=D.filter(([,d])=>d.meta&&!(hasSeq(slug(d.meta.h1+' '+d.meta.title),dv)&&hasSeq(slug(d.meta.h1+' '+d.meta.title),dd))).map(([n])=>n);
