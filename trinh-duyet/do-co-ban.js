@@ -69,7 +69,7 @@ function measure(html,cfg){
  KW.forEach(function(k,i){var re=KR[i],ps=[],y;re.lastIndex=0;while((y=re.exec(L)))ps.push(Math.round(y.index/L.length*100));var P3=[0].concat(ps,[100]),g=0;for(var j=0;j<P3.length-1;j++)g=Math.max(g,P3[j+1]-P3[j]);
   var f=0;for(var q3=0;q3<hm.length;q3++)if(has(re,hm[q3][1].toLowerCase())){f=q3+1;break}
   kw[k]=[ps.length,cnt(re,H2T),cnt(re,H3T),N?Math.round(ps.length*toks(k).length/N*1000)/10:0,g,hc(re,h2L),hc(re,h3L),f,pct(alts.filter(function(a){return has(re,a)}).length,alts.length)]});
- var S=segs(L),PH=[S1,D1].concat(brand.map(function(b){return toks(b.toLowerCase())})),G=ngrams(S,pairs([ex,dv+' '+dd,dv+' quận '+dd,'quận '+dd,'huyện '+dd].concat(brand)),2,cfg.top||200,PH);
+ var S=segs(L),PH=[S1,D1].concat(brand.map(function(b){return toks(b.toLowerCase())})),G=ngrams(S,pairs([ex,dv+' '+dd,dv+' quận '+dd,'quận '+dd,'huyện '+dd].concat(brand,KW)),2,cfg.top||200,PH);
  var SEC=html.split(/(?=<h[23][\s>])/i).map(function(b){var mh=/<(h[23])[^>]*>([\s\S]*?)<\/\1>/i.exec(b);return {h:mh?mh[1].slice(1)+'|'+txt(mh[2]):'(mở bài)',S:segs(txt(b).toLowerCase())}});
  return {r:{m:m,hm:hm,kw:kw,sh:SEC.map(function(x){return x.h}),ng:G.ng,fr:G.fr},S:S,SEC:SEC,hrefs:hrefs,L:L};
 }
@@ -94,7 +94,14 @@ async function site(dv,n){ // chạy trong tab kienmoitruong.com: title/H1/meta 
  return {tong:urls.size,site:out};
 }
 function serp(){var o=[],seen=new Set();document.querySelectorAll('#search a h3, #rso a h3').forEach(function(h){var a=h.closest('a');if(!a||!a.href||/google\./.test(new URL(a.href).host)||a.closest('#tads,#bottomads'))return;var u=a.href.split('#')[0];if(seen.has(u))return;seen.add(u);o.push([o.length+1,u,h.textContent.trim().slice(0,110)])});var cap=!!document.querySelector('#captcha-form,form[action*="sorry"]')||/\/sorry\//.test(location.pathname);return {q:new URLSearchParams(location.search).get('q'),captcha:cap,kq:o.slice(0,10)}}
-var api={serp:serp,measure:measure,page:page,count:count,ctx:ctx,segs:segs,txt:txt,toks:toks,num:num,pairs:pairs,NOISE:NOISE,site:site,sents:sents,SW:SW,
+async function dvkhac(dv,dd){var sl=function(x){return String(x).toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/[^a-z0-9]+/g,'-')};
+ var own=sl(dv),d=sl(dd),P=function(x){return new DOMParser().parseFromString(x,'text/xml')},Lc=function(x){return [].slice.call(x.getElementsByTagName('loc')).map(function(e){return e.textContent.trim()})};
+ var maps=[],f=['/sitemap_index.xml','/wp-sitemap.xml'];for(var i=0;i<f.length&&!maps.length;i++){try{var r=await fetch(f[i]);if(r.ok)maps=Lc(P(await r.text()))}catch(e){}}
+ var re=new RegExp('^/([a-z0-9-]+?)-(?:tai-|o-)?(?:quan-|huyen-|thi-xa-|thanh-pho-|tp-)?'+d+'/?$'),hit={};
+ await Promise.all(maps.filter(function(m){return !/image|category|tag|author/.test(m)}).map(async function(m){try{Lc(P(await (await fetch(m)).text())).forEach(function(u){var p;try{p=new URL(u).pathname}catch(e){return}var mm=re.exec(p);if(mm&&mm[1]!==own&&mm[1].indexOf(own)!==0)hit[u]=mm[1]})}catch(e){}}));
+ var out=[];await Promise.all(Object.keys(hit).slice(0,20).map(async function(u){try{var doc=new DOMParser().parseFromString(await (await fetch(u)).text(),'text/html'),h=(doc.querySelector('h1')||{}).textContent||doc.title||'';h=h.replace(/\s+/g,' ').trim();var t=h.toLowerCase().split(/\s+(?:tại|ở)\s+/)[0].replace(/^(dịch vụ|đơn vị|thợ|công ty)\s+/,'').trim();out.push({url:new URL(u).pathname,dv:t,h1:h.slice(0,90)})}catch(e){}}));
+ return out}
+var api={serp:serp,dvkhac:dvkhac,measure:measure,page:page,count:count,ctx:ctx,segs:segs,txt:txt,toks:toks,num:num,pairs:pairs,NOISE:NOISE,site:site,sents:sents,SW:SW,
  x:function(phr){return ctx(window.__SEC,phr)},ig:function(){return window.__IG}};
 if(typeof module!=='undefined')module.exports=api;
 return api;})();
