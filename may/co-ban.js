@@ -86,7 +86,7 @@ else if(cmd==='meta'){ // kiểm Title/H1/Meta: P[1] là JSON bài của mình (
  const DT=dts.map((x,i)=>['dt'+(i+1),x.meta.title]),DD=dts.map((x,i)=>['dt'+(i+1),x.meta.desc]).filter(z=>z[1]),ST=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.title]),SH=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.h1]),SD=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.desc]).filter(z=>z[1]);
  let b=hit(t,DT,4).concat(hit(h,DT,5));add('Khác-đối-thủ',!b.length,b.join('; ')||'Title/H1 không chung ≥4/5 từ liền nhau với title đối thủ');
  b=hit(d,DD,6);add('Meta-khác-đối-thủ',!b.length,b.join('; ')||'Meta không chung ≥6 từ liền nhau với meta đối thủ');
- add('Có-dữ-liệu-site',site.length>0,site.length?`${site.length} trang cùng dịch vụ trên site để so khuôn`:'chưa có site.json: chạy KMT.site ở Bước 1');
+ add('Có-dữ-liệu-site',site.length>0,site.length?`${site.length} trang cùng dịch vụ trên site để so khuôn`:'chưa có site.json: chạy KDO.site trong tab bài của mình');
  b=hit(t,ST,4);add('Khuôn-title',!b.length,b.slice(0,3).join('; ')||'không chung ≥4 từ liền nhau (ngoài từ khoá) với title trang cùng dịch vụ trên site');
  b=hit(h,SH,5);add('Khuôn-H1',!b.length,b.slice(0,3).join('; ')||'không chung ≥5 từ liền nhau với H1 trang cùng dịch vụ trên site',false);
  b=hit(d,SD,8);add('Khuôn-meta',!b.length,b.slice(0,3).join('; ')||'không chung ≥8 từ liền nhau với meta trang cùng dịch vụ trên site');
