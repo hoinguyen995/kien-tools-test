@@ -63,7 +63,7 @@ else if(cmd==='plan'){ // bảng chỉ số + từ khoá + bản đồ heading. 
  if(wr.length)o.push('',`⚠ Đối thủ có H1/Title thiếu dịch vụ hoặc địa danh: ${wr.join(', ')}. Kiểm tra lại, có thể chọn nhầm bài.`);
  const sel=D.filter(([,d])=>d.meta&&(d.meta.sel==='body'||d.m.w<800)).map(([n])=>n);if(sel.length)o.push(`⚠ Có thể lấy nhầm vùng nội dung: ${sel.join(', ')}. Đo lại với sel.`);
  console.log(o.join('\n'));}
-else if(cmd==='meta'){ // kiểm Title/H1/Meta: P[1] là JSON bài của mình (có nums): ý đối thủ, giá trị thật, không trùng đối thủ, không trùng khuôn trang KMT cùng dịch vụ
+else if(cmd==='meta'){ // kiểm Title/H1/Meta: P[1] là JSON bài của mình (có nums): ý đối thủ, giá trị thật, không trùng đối thủ, không trùng khuôn trang cùng dịch vụ trên site
  const P=[];let site=[];for(let i=0;i<A.length;i++){if(A[i]==='--site'){const x=J(A[++i]);site=Array.isArray(x)?x:(x.site||[])}else P.push(A[i])}
  const cfg=J(P[0]),body=(J(P[1]).nums||[]).join(' '),[t,h,d]=P.slice(2,5).map(x=>String(x).normalize('NFC')),dts=P.slice(5).map(J);
  const V1=new RegExp(cfg.dv+'\\s+tại\\s+(?:quận\\s+|huyện\\s+)?'+cfg.dd,'giu'),VA=new RegExp(cfg.dv+'\\s+tại\\s','giu'),c=s=>(String(s).match(V1)||[]).length,ca=s=>(String(s).match(VA)||[]).length,res=[];
@@ -86,10 +86,10 @@ else if(cmd==='meta'){ // kiểm Title/H1/Meta: P[1] là JSON bài của mình (
  const DT=dts.map((x,i)=>['dt'+(i+1),x.meta.title]),DD=dts.map((x,i)=>['dt'+(i+1),x.meta.desc]).filter(z=>z[1]),ST=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.title]),SH=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.h1]),SD=site.map(x=>[x.url.replace(/^https?:\/\/[^/]+/,''),x.desc]).filter(z=>z[1]);
  let b=hit(t,DT,4).concat(hit(h,DT,5));add('Khác-đối-thủ',!b.length,b.join('; ')||'Title/H1 không chung ≥4/5 từ liền nhau với title đối thủ');
  b=hit(d,DD,6);add('Meta-khác-đối-thủ',!b.length,b.join('; ')||'Meta không chung ≥6 từ liền nhau với meta đối thủ');
- add('Có-dữ-liệu-site',site.length>0,site.length?`${site.length} trang KMT cùng dịch vụ để so khuôn`:'chưa có site.json: chạy KMT.site ở Bước 1');
- b=hit(t,ST,4);add('Khuôn-title',!b.length,b.slice(0,3).join('; ')||'không chung ≥4 từ liền nhau (ngoài từ khoá) với title trang KMT cùng dịch vụ');
- b=hit(h,SH,5);add('Khuôn-H1',!b.length,b.slice(0,3).join('; ')||'không chung ≥5 từ liền nhau với H1 trang KMT cùng dịch vụ',false);
- b=hit(d,SD,8);add('Khuôn-meta',!b.length,b.slice(0,3).join('; ')||'không chung ≥8 từ liền nhau với meta trang KMT cùng dịch vụ');
+ add('Có-dữ-liệu-site',site.length>0,site.length?`${site.length} trang cùng dịch vụ trên site để so khuôn`:'chưa có site.json: chạy KMT.site ở Bước 1');
+ b=hit(t,ST,4);add('Khuôn-title',!b.length,b.slice(0,3).join('; ')||'không chung ≥4 từ liền nhau (ngoài từ khoá) với title trang cùng dịch vụ trên site');
+ b=hit(h,SH,5);add('Khuôn-H1',!b.length,b.slice(0,3).join('; ')||'không chung ≥5 từ liền nhau với H1 trang cùng dịch vụ trên site',false);
+ b=hit(d,SD,8);add('Khuôn-meta',!b.length,b.slice(0,3).join('; ')||'không chung ≥8 từ liền nhau với meta trang cùng dịch vụ trên site');
  const sf=s=>(s.match(/\[[^\]]*\]|【[^】]*】/)||[''])[0];add('Hậu-tố',/\d/.test(sf(t)+sf(h))&&sf(t)!==sf(h),`Title ${sf(t)||'—'} / H1 ${sf(h)||'—'} (có số, không trùng)`,false);
  console.log('Focus keyword: '+cfg.dv.toLowerCase()+' tại '+cfg.dd.toLowerCase());
  const fail=res.filter(r=>r[3]&&!r[1]).map(r=>r[0]);console.log(`Cổng: ${fail.length?'ĐÓNG ('+fail.join(', ')+')':'MỞ'}`);res.forEach(r=>console.log(`${r[1]?'ĐẠT':'CHƯA'}${r[3]?'':' (nên)'} ${r[0]}: ${r[2]}`));process.exit(fail.length?1:0);}

@@ -82,7 +82,7 @@ function page(cfg){
  var o=measure(el.innerHTML,{dv:cfg.dv,dd:cfg.dd,brand:b,host:location.host,top:cfg.top,kw:cfg.kw});window.__S=o.S;window.__SEC=o.SEC;window.__IG={sh:o.r.sh,brand:b,s:sents(el.innerHTML)};
  var meta={url:location.href,sel:used||'body',brand:b,title:document.title.trim(),desc:q('meta[name="description"]'),h1:q('h1'),soh1:document.querySelectorAll('h1').length};
  var out={m:o.r.m,hm:o.r.hm,kw:o.r.kw,meta:meta};if(cfg.ng){out.sh=o.r.sh;out.ng=o.r.ng;out.fr=o.r.fr}
- if(cfg.own){var ln=[],ex=0;el.querySelectorAll('a[href]').forEach(function(a){var h=a.getAttribute('href')||'';if(/^(tel|mailto|#|javascript)/i.test(h))return;var u;try{u=new URL(h,location.href)}catch(e){return}if(u.host===location.host)ln.push([a.textContent.replace(/\s+/g,' ').trim().slice(0,60),u.pathname]);else ex++});out.links=ln;out.linkNgoai=ex;out.nums=Array.from(new Set(num(o.L).match(/\d+/g)||[]))}
+ if(cfg.own){var ln=[],ex=0;el.querySelectorAll('a[href]').forEach(function(a){var h=a.getAttribute('href')||'';if(/^(tel|mailto|#|javascript)/i.test(h))return;var u;try{u=new URL(h,location.href)}catch(e){return}if(u.host===location.host)ln.push([a.textContent.replace(/\s+/g,' ').trim().slice(0,60),u.pathname]);else ex++});out.links=ln;out.linkNgoai=ex;out.nums=Array.from(new Set(num(o.L).match(/\d+/g)||[]));var bc=document.body.className,pm=bc.match(/postid-(\d+)/),gm=bc.match(/page-id-(\d+)/);out.wp=pm?{type:'post',id:+pm[1]}:gm?{type:'page',id:+gm[1]}:null}
  return out;
 }
 async function site(dv,n){ // chạy trong tab kienmoitruong.com: title/H1/meta các trang cùng dịch vụ (qua sitemap)
